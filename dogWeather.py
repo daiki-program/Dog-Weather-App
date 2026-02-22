@@ -1,13 +1,18 @@
 import os
+import time
 import requests
 from datetime import datetime, timedelta
-from dotenv import load_dotenv  # .envを読み込むためのライブラリ
+from dotenv import load_dotenv
 from flask import Flask, render_template, request
 
-# .envファイルから環境変数を読み込む
-load_dotenv()
+# --- タイムゾーンの設定 ---
+os.environ['TZ'] = 'Asia/Tokyo'
+try:
+    time.tzset()
+except AttributeError:
+    pass
 
-# APIキーを環境変数から取得
+load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 app = Flask(__name__) 
@@ -19,7 +24,6 @@ CITIES = {
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 DOG_URL = "https://dog.ceo/api/breeds/image/random"
 
-# --- キャッシュ管理用 ---
 weather_cache = {}
 last_update_time = None
 
@@ -53,14 +57,10 @@ def get_target_forecast(city_name):
     global last_update_time, weather_cache
     now = datetime.now()
     
-    # 1. キャッシュチェック (前回取得から1時間以内ならAPIを叩かない)
     if last_update_time and (now - last_update_time) < timedelta(hours=1):
         if city_name in weather_cache:
-            print(f"[{city_name}] キャッシュを使用します")
             return weather_cache[city_name]
 
-    # 2. キャッシュがない、または1時間以上経過した場合はAPI取得
-    print(f"[{city_name}] APIから最新情報を取得します...")
     params = {
         "q": city_name,
         "appid": API_KEY,
@@ -74,19 +74,18 @@ def get_target_forecast(city_name):
         if "list" in response:
             for item in response["list"]:
                 dt = datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S")
-                # 未来のデータ、かつ9時or15時のみ
+                # 未来のデータかつ、散歩の目安になる9時・15時のみを抽出
                 if dt > now and dt.hour in [9, 15]:
                     results.append({
                         "time": format_datetime(item["dt_txt"]),
                         "desc": get_weather_emoji(item["weather"][0]["icon"]),
                         "temp": round(item["main"]["temp"])
                     })
-                if len(results) >= 4:
+                # 深夜でも翌々日までカバーできるよう少し多めに取得（最大6個）
+                if len(results) >= 6:
                     break
         
-        # 取得したデータを保存
         weather_cache[city_name] = results
-        # 最終更新として記録
         last_update_time = now
         return results
     except Exception as e:
@@ -99,26 +98,38 @@ def home():
     for display_name, city_name in CITIES.items():
         all_weather[display_name] = get_target_forecast(city_name)
     
-    # --- セリフ決定ロジック ---
-    comment = "今日も一日頑張るワン！"# デフォルトのコメント
-    
-    if "23区" in all_weather and len(all_weather["23区"]) > 0:
-        target_forecast = all_weather["23区"][0]
-        weather_icon = target_forecast["desc"]
-        time_label = target_forecast["time"]
-        
-        if weather_icon == "☀️":
-            comment = f"{time_label}はお散歩日和だワン！"
-        elif weather_icon in ["☁️", "🌤️", "🌫️"]:
-            comment = f"{time_label}は雲がでるワン"
-        elif weather_icon in ["🌧️", "☔️"]:
-            comment = f"{time_label}は雨っぽいワン。散歩は短めだワン。"
-        elif weather_icon == "⛄️":
-            comment = f"{time_label}は雪だワン！肉球が冷たいワン！"
-        elif weather_icon == "⛈️":
-            comment = f"{time_label}はカミナリは怖いワン..."
+    # --- セリフ決定ロジック（堅牢版） ---
+    comment = "今日も一日頑張るワン！"
 
-    # --- 犬画像取得 (こちらはリロードのたびに新しくする) ---
+    if "23区" in all_weather and len(all_weather["23区"]) > 0:
+        forecast_list = all_weather["23区"]
+        
+        # デフォルトはリストの先頭（一番近い未来）
+        target_forecast = forecast_list[0]
+
+        # リストを順に見て、最初に見つかった「午前」または「午後」の予報をターゲットにする
+        # これにより、15時を過ぎて「今日の午後」がAPIから消えれば自動で「明日の午前」が選ばれる
+        for f in forecast_list:
+            if "午前" in f["time"] or "午後" in f["time"]:
+                target_forecast = f
+                break
+
+        time_label = target_forecast["time"]
+        weather_icon = target_forecast["desc"]
+        
+        comment_map = {
+            "☀️": f"{time_label}はお散歩日和だワン！",
+            "🌧️": f"{time_label}は雨っぽいワン。散歩は短めだワン。",
+            "☔️": f"{time_label}は雨っぽいワン。散歩は短めだワン。",
+            "☁️": f"{time_label}は雲がでるワン",
+            "🌤️": f"{time_label}は雲がでるワン",
+            "🌫️": f"{time_label}は雲がでるワン",
+            "⛄️": f"{time_label}は雪だワン！肉球が冷たいワン！",
+            "⛈️": f"{time_label}はカミナリは怖いワン..."
+        }
+        comment = comment_map.get(weather_icon, f"{time_label}も元気に過ごすワン！")
+
+    # --- 犬画像取得 ---
     try:
         d_data = requests.get(DOG_URL).json()
         dog_img = d_data['message']
