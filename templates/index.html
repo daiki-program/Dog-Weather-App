@@ -27,18 +27,18 @@
         {% endfor %}
     </div>
 
-    <div class="dog-section">
-        <div class="dog-container">
-            <div class="dog-image-group">
-                <p class="dog-breed">🐶 {{ breed_name }}</p>
-                <img src="{{ dog_url }}" alt="Lucky Dog" id="dog-img">
-            </div>
-            <div class="balloon">
-                {{ dog_comment }}
-            </div>
+<div class="dog-section">
+    <div class="dog-container">
+        <div class="dog-image-group">
+            <p class="dog-breed" id="dog-breed-label">🐶 {{ breed_name }}</p>
+            <img src="{{ dog_url }}" alt="Lucky Dog" id="dog-image">
         </div>
-        <p><button id="update-btn" onclick="location.reload();">更新</button></p>
+        <div class="balloon">
+            {{ dog_comment }}
+        </div>
     </div>
+    <p><button id="update-btn">更新</button></p>
+</div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
