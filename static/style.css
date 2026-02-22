@@ -7,12 +7,11 @@ body {
     display: flex; 
     flex-direction: column; 
     align-items: center;
-    height: 100vh;
+    min-height: 100vh; /* heightからmin-heightに変更してスクロールを許容 */
     box-sizing: border-box;
-    overflow: hidden;
 }
 
-h1 { margin: 2px 0 8px; font-size: 1.2rem; color: #333; }
+h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
 
 /* --- 予報ボード --- */
 .weather-board {
@@ -20,53 +19,67 @@ h1 { margin: 2px 0 8px; font-size: 1.2rem; color: #333; }
     max-width: 900px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .city-row {
     background: white;
     border-radius: 12px;
     display: flex;
-    align-items: center;
-    padding: 6px 15px;
+    align-items: stretch; /* 高さを揃える */
+    overflow: hidden; /* 子要素の角丸はみ出し防止 */
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 .city-name {
-    width: 85px;
+    width: 80px;
+    min-width: 80px;
     font-weight: bold;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    background: #ffffff;
     border-right: 2px solid #f0f4f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 5px;
+    z-index: 2;
 }
 
+/* 予報エリアを横スクロール可能に */
 .forecast-cells {
     display: flex;
     flex: 1;
-    justify-content: space-evenly;
-    align-items: center;
+    overflow-x: auto; /* 横スクロールを許可 */
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 5px;
+    gap: 15px;
+    scrollbar-width: none; /* Firefox用 */
+}
+
+.forecast-cells::-webkit-scrollbar {
+    display: none; /* Chrome/Safari用スクロールバー非表示 */
 }
 
 .cell {
     text-align: center;
-    /* 予報が3つや4つになっても幅が変わらないように固定 */
-    min-width: 70px; 
+    min-width: 70px; /* セルの幅を固定してスクロールさせる */
+    flex-shrink: 0;
 }
-.time { font-size: 0.8rem; font-weight: bold; color: #555; background: #e9ecef; padding: 1px 6px; border-radius: 5px; display: inline-block; margin-bottom: 2px;}
+
+.time { font-size: 0.75rem; font-weight: bold; color: #555; background: #e9ecef; padding: 1px 6px; border-radius: 5px; display: inline-block; margin-bottom: 2px; white-space: nowrap;}
 .emoji { font-size: 1.8rem; line-height: 1; margin: 2px 0; }
 .temp { font-size: 1rem; font-weight: bold; color: #ff5722; }
 
 /* --- ワンコセクション --- */
 .dog-section { 
-    margin-top: 5px;
-    flex: 1;
+    margin-top: 20px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    min-height: 0;
+    padding-bottom: 30px;
 }
 
-/* 画像＋吹き出しのコンテナ */
 .dog-container {
     display: flex;
     align-items: center;
@@ -75,11 +88,10 @@ h1 { margin: 2px 0 8px; font-size: 1.2rem; color: #333; }
     max-width: 95%;
 }
 
-/* 画像＋犬種名のグループ（垂直に並べる） */
 .dog-image-group {
     display: flex;
     flex-direction: column;
-    align-items: center; /* これで犬種名が画像の中央にくる */
+    align-items: center;
 }
 
 .dog-breed { 
@@ -91,17 +103,16 @@ h1 { margin: 2px 0 8px; font-size: 1.2rem; color: #333; }
 }
 
 .dog-section img { 
-    max-height: 35vh; 
+    max-height: 30vh; 
     width: auto;
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     object-fit: contain;
 }
 
-/* 右出し吹き出し */
 .balloon {
     position: relative;
-    padding: 10px 15px;
+    padding: 12px 15px;
     background: #ffffff;
     border: 2px solid #4caf50;
     border-radius: 15px;
@@ -112,35 +123,39 @@ h1 { margin: 2px 0 8px; font-size: 1.2rem; color: #333; }
     max-width: 180px;
 }
 
+/* PC用：左向きの三角 */
 .balloon::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 100%;
-    margin-top: -10px;
-    border: 10px solid transparent;
-    border-right: 10px solid #ffffff;
-    z-index: 2;
+    content: ""; position: absolute; top: 50%; right: 100%;
+    margin-top: -10px; border: 10px solid transparent; border-right: 10px solid #ffffff; z-index: 2;
 }
-
 .balloon::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 100%;
-    margin-top: -11px;
-    border: 11px solid transparent;
-    border-right: 11px solid #4caf50;
-    z-index: 1;
+    content: ""; position: absolute; top: 50%; right: 100%;
+    margin-top: -11px; border: 11px solid transparent; border-right: 11px solid #4caf50; z-index: 1;
 }
 
-/* 更新ボタン */
 button { 
-    margin-top: 10px;
+    margin-top: 15px;
     background: #4caf50; color: white; border: none; 
-    padding: 10px 40px; border-radius: 30px; 
+    padding: 12px 50px; border-radius: 30px; 
     cursor: pointer; font-size: 1rem; font-weight: bold;
-    transition: all 0.2s ease;
     box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
 }
-button:hover { background: #45a049; transform: scale(1.05); }
+
+/* --- スマホ専用メディアクエリ --- */
+@media (max-width: 600px) {
+    .dog-container {
+        flex-direction: column; /* 犬と吹き出しを縦並びに */
+        gap: 20px;
+    }
+    
+    .balloon {
+        max-width: 85%;
+    }
+
+    /* 三角を上向きに変更 */
+    .balloon::after, .balloon::before {
+        right: auto; top: auto; left: 50%; transform: translateX(-50%);
+    }
+    .balloon::after { bottom: 100%; border-right: 10px solid transparent; border-bottom: 10px solid #ffffff; margin-top: 0; }
+    .balloon::before { bottom: 100%; border-right: 11px solid transparent; border-bottom: 11px solid #4caf50; margin-bottom: -1px; margin-top: 0; }
+}
