@@ -32,8 +32,8 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
 }
 
 .city-name {
-    width: 70px;
-    min-width: 70px;
+    width: 80px;
+    min-width: 80px;
     font-weight: bold;
     font-size: 0.8rem;
     background: #fdfdfd;
