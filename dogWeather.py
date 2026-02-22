@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, request
 
 # --- タイムゾーンの設定 ---
+# サーバー環境でも日本時間で動作させるための必須設定
 os.environ['TZ'] = 'Asia/Tokyo'
 try:
     time.tzset()
 except AttributeError:
+    # Windows環境用
     pass
 
 load_dotenv()
@@ -23,9 +25,6 @@ CITIES = {
 }
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 DOG_URL = "https://dog.ceo/api/breeds/image/random"
-
-weather_cache = {}
-last_update_time = None
 
 def format_datetime(dt_txt):
     dt = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
@@ -54,13 +53,10 @@ def get_weather_emoji(icon_code):
     return emoji_map.get(icon_code[:2], "🌈")
 
 def get_target_forecast(city_name):
-    global last_update_time, weather_cache
+    """
+    キャッシュを介さず、常に最新の予報を取得する。
+    """
     now = datetime.now()
-    
-    if last_update_time and (now - last_update_time) < timedelta(hours=1):
-        if city_name in weather_cache:
-            return weather_cache[city_name]
-
     params = {
         "q": city_name,
         "appid": API_KEY,
@@ -74,19 +70,15 @@ def get_target_forecast(city_name):
         if "list" in response:
             for item in response["list"]:
                 dt = datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S")
-                # 未来のデータかつ、散歩の目安になる9時・15時のみを抽出
+                # 未来の散歩ピーク（9時・15時）のみを抽出
                 if dt > now and dt.hour in [9, 15]:
                     results.append({
                         "time": format_datetime(item["dt_txt"]),
                         "desc": get_weather_emoji(item["weather"][0]["icon"]),
                         "temp": round(item["main"]["temp"])
                     })
-                # 深夜でも翌々日までカバーできるよう少し多めに取得（最大6個）
                 if len(results) >= 6:
                     break
-        
-        weather_cache[city_name] = results
-        last_update_time = now
         return results
     except Exception as e:
         print(f"Error: {e}")
@@ -98,17 +90,16 @@ def home():
     for display_name, city_name in CITIES.items():
         all_weather[display_name] = get_target_forecast(city_name)
     
-    # --- セリフ決定ロジック（堅牢版） ---
+    # --- セリフ決定ロジック ---
     comment = "今日も一日頑張るワン！"
 
     if "23区" in all_weather and len(all_weather["23区"]) > 0:
         forecast_list = all_weather["23区"]
         
-        # デフォルトはリストの先頭（一番近い未来）
+        # デフォルトはリストの先頭（直近の未来）
         target_forecast = forecast_list[0]
 
-        # リストを順に見て、最初に見つかった「午前」または「午後」の予報をターゲットにする
-        # これにより、15時を過ぎて「今日の午後」がAPIから消えれば自動で「明日の午前」が選ばれる
+        # リスト内を走査し、最初に見つかった「午前/午後」予報を優先（動的選択）
         for f in forecast_list:
             if "午前" in f["time"] or "午後" in f["time"]:
                 target_forecast = f
@@ -129,7 +120,7 @@ def home():
         }
         comment = comment_map.get(weather_icon, f"{time_label}も元気に過ごすワン！")
 
-    # --- 犬画像取得 ---
+    # --- 犬画像取得 (ここもリロードのたびに最新) ---
     try:
         d_data = requests.get(DOG_URL).json()
         dog_img = d_data['message']

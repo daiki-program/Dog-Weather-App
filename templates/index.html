@@ -2,15 +2,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ワンコ天気予報</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <head>
-    <meta charset="UTF-8">
-    <title>ワンコ天気予報</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}">
-</head>
 </head>
 <body>
     <h1>🐶 ワンコ天気予報</h1>
@@ -42,7 +37,7 @@
                 {{ dog_comment }}
             </div>
         </div>
-        <p><button id="update-btn">更新</button></p>
+        <p><button id="update-btn" onclick="location.reload();">更新</button></p>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
