@@ -31,7 +31,6 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-/* 地域名を左側に完全固定 */
 .city-name {
     width: 70px;
     min-width: 70px;
@@ -47,32 +46,34 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     text-align: center;
 }
 
-/* ★ 予報スライドエリア：ここが重要 ★ */
+/* 予報エリア：PCでは両端揃え、スマホでスクロール */
 .forecast-cells {
     display: flex;
     flex: 1;
-    overflow-x: auto; /* 横スクロール許可 */
-    scroll-behavior: smooth; /* スムーズな動き */
-    -webkit-overflow-scrolling: touch; /* iOSヌルヌル */
-    padding: 12px 10px;
-    gap: 12px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 15px;
     
-    /* スナップ機能：止まるときにピタッと止まる */
+    /* 【PC版】両端揃えにする設定 */
+    justify-content: space-between; 
+}
+
+/* スナップ機能（スマホ用） */
+.forecast-cells {
     scroll-snap-type: x mandatory; 
 }
 
-/* スクリロールバーを隠す（デザイン優先） */
 .forecast-cells::-webkit-scrollbar {
-    display: none;
+    display: none; /* スクロールバー非表示 */
 }
 
 /* 各予報セルの設定 */
 .cell {
     text-align: center;
-    /* 6枚までスムーズに見えるよう幅を調整 */
-    min-width: 75px; 
-    flex-shrink: 0;
-    scroll-snap-align: start; /* スナップの基準点 */
+    flex-shrink: 1; /* PCでは縮んで並ぶ */
+    flex-basis: auto;
+    scroll-snap-align: start;
 }
 
 .time { font-size: 0.7rem; font-weight: bold; color: #666; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; white-space: nowrap;}
@@ -130,7 +131,6 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     max-width: 160px;
 }
 
-/* 吹き出しの三角（PC用） */
 .balloon::after {
     content: ""; position: absolute; top: 50%; right: 100%;
     margin-top: -10px; border: 10px solid transparent; border-right: 10px solid #ffffff; z-index: 2;
@@ -145,11 +145,21 @@ button {
     background: #4caf50; color: white; border: none; 
     padding: 12px 60px; border-radius: 30px; 
     cursor: pointer; font-size: 1rem; font-weight: bold;
-    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
 }
 
-/* --- スマホ専用調整 --- */
+/* --- スマホ専用調整 (600px以下) --- */
 @media (max-width: 600px) {
+    /* 【スマホ版】スクロールを発生させるために左寄せに変更 */
+    .forecast-cells {
+        justify-content: flex-start; 
+        gap: 20px; /* セル間の余白 */
+    }
+
+    .cell {
+        min-width: 80px; /* セルの幅を固定してはみ出させる */
+        flex-shrink: 0;
+    }
+
     .dog-container {
         flex-direction: column;
         gap: 20px;
@@ -160,7 +170,6 @@ button {
         text-align: center;
     }
 
-    /* 吹き出しの三角を上向きに */
     .balloon::after, .balloon::before {
         right: auto; top: auto; left: 50%; transform: translateX(-50%);
     }
