@@ -20,6 +20,10 @@ CITIES = {
     "多摩地区": "Hachioji"
 }
 
+# --- キャッシュ用の設定 ---
+weather_cache = {}  # データを一時保存する箱
+CACHE_DURATION_MINUTES = 10  # 10分間保存する設定
+
 # --- ヘルパー関数：常に日本時間を取得 ---
 def get_now_tokyo():
     """OSの環境に依存せず、常に日本標準時(JST)の現在時刻を返す"""
@@ -57,8 +61,16 @@ def get_weather_info(icon_code):
     return emoji_map.get(icon_id, "🌈"), icon_id
 
 def get_target_forecast(city_name):
-    # 日本時間の「今」を基準にする
-    now = get_now_tokyo().replace(tzinfo=None)
+    now = get_now_tokyo() # タイムゾーン付きの現在時刻
+
+    # 【追加】キャッシュを確認
+    if city_name in weather_cache:
+        expire_time = weather_cache[city_name]['expires']
+        if now < expire_time:
+            print(f"キャッシュからデータを返します: {city_name}")
+            return weather_cache[city_name]['data']
+
+    # --- 以下、キャッシュがない場合のみ実行される ---
     params = {
         "q": city_name,
         "appid": API_KEY,
@@ -72,11 +84,11 @@ def get_target_forecast(city_name):
         response = res.json()
 
         results = []
+        now_naive = now.replace(tzinfo=None) # 比較用にtzを消す
         if "list" in response:
             for item in response["list"]:
                 dt = datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S")
-                # 過去の予報はスキップし、特定の時間帯(9, 15時)のみ抽出
-                if dt > now and dt.hour in TARGET_HOURS:
+                if dt > now_naive and dt.hour in TARGET_HOURS:
                     emoji, icon_id = get_weather_info(item["weather"][0]["icon"])
                     results.append({
                         "time": format_datetime(item["dt_txt"]),
@@ -86,10 +98,19 @@ def get_target_forecast(city_name):
                     })
                 if len(results) >= 6:
                     break
+        
+        # 新しく取ってきたデータをキャッシュに保存する
+        weather_cache[city_name] = {
+            'expires': now + timedelta(minutes=CACHE_DURATION_MINUTES),
+            'data': results
+        }
+        
         return results
+
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Weather API request failed: {e}")
-        return []
+        # 万が一失敗しても、古いキャッシュがあればそれを返す
+        return weather_cache.get(city_name, {}).get('data', [])
 
 @app.route('/')
 def home():
@@ -98,7 +119,7 @@ def home():
         all_weather[display_name] = get_target_forecast(city_name)
 
     comment = "今日も一日頑張るワン！"
-    current_month = get_now_tokyo().month # ここも日本時間で判定
+    current_month = get_now_tokyo().month
 
     # 代表として「23区」の最初の予報を元にコメントを生成
     if "23区" in all_weather and len(all_weather["23区"]) > 0:
@@ -120,26 +141,14 @@ def home():
             comment = f"{time_label}は雨っぽいワン。散歩は中止か短めだワン。"
         elif icon_id == "13":
             comment = f"{time_label}は雪だワン！肉球が冷たくて震えるワン！"
-
-    # 犬画像の取得
-    try:
-        d_res = requests.get(DOG_URL, timeout=REQUEST_TIMEOUT)
-        d_res.raise_for_status()
-        d_data = d_res.json()
-        dog_img = d_data['message']
-        breed_raw = dog_img.split('/')[-2]
-        breed_name = breed_raw.replace('-', ' ').title()
-    except requests.exceptions.RequestException:
-        dog_img = ""
-        breed_name = "Unknown Dog"
-
-    return render_template(
-        'index.html',
-        weather_data=all_weather,
-        dog_url=dog_img,
-        breed_name=breed_name,
-        dog_comment=comment
-    )
+        
+        return render_template(
+            'index.html',
+            weather_data=all_weather,
+            dog_url="",         # JSで後から入れるので空
+            breed_name="Loading...", 
+            dog_comment=comment
+        )
 
 if __name__ == "__main__":
     app.run(debug=True)
