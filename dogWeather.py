@@ -13,7 +13,7 @@ app = Flask(__name__)
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 DOG_URL = "https://dog.ceo/api/breeds/image/random"
 TARGET_HOURS = [9, 15]
-REQUEST_TIMEOUT = 5
+REQUEST_TIMEOUT = 300
 
 CITIES = {
     "23区": "Chiyoda",
