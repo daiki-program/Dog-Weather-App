@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (dogImage) {
                 dogImage.src = data.message;
-                // URLから犬種を抜き出し（例: /breeds/shiba/n02106734_3427.jpg）
+                // URLから犬種を抜き出し
                 const breed = data.message.split('/')[4].replace('-', ' ');
                 if (breedLabel) breedLabel.innerText = breed.toUpperCase();
             }
@@ -26,23 +26,18 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchDog();
 
     // --- 更新ボタン & 音声再生 ---
-    if (updateBtn) {
-        updateBtn.addEventListener('click', () => {
-            updateBtn.style.opacity = '0.5';
-            updateBtn.innerText = '更新中...';
+if (updateBtn) {
+    updateBtn.addEventListener('click', () => {
+        // ボタンを無効化して連打を防ぐ
+        updateBtn.disabled = true;
+        updateBtn.style.opacity = '0.5';
+        updateBtn.innerText = 'サーバー起動中...';
 
-            const reloadPage = () => window.location.reload();
+        barkSound.play().catch(e => console.log("音は出せなかったけど進むワン"));
 
-            // 音声が終わったらリロード
-            barkSound.addEventListener('ended', reloadPage, { once: true });
-
-            barkSound.play().catch(err => {
-                console.log("音声再生がブロックされました:", err);
-                reloadPage(); // 再生できなくてもリロードはする
-            });
-
-            // 念のため2秒後に強制リロード
-            setTimeout(reloadPage, 2000);
-        });
-    }
-});
+        // 2. 「音が終わるのを待たず」に、5秒〜10秒後くらいにリロードさせる
+        setTimeout(() => {
+            window.location.reload();
+        }, 10000); 
+    });
+}
