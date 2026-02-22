@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ワンコ天気予報</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <head>
+    <meta charset="UTF-8">
+    <title>ワンコ天気予報</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}">
+</head>
+</head>
+<body>
+    <h1>🐶 ワンコ天気予報</h1>
+
+    <div class="weather-board">
+        {% for city, forecasts in weather_data.items() %}
+        <div class="city-row">
+            <div class="city-name">📍 {{ city }}</div>
+            <div class="forecast-cells">
+                {% for f in forecasts %}
+                <div class="cell">
+                    <div class="time">{{ f.time }}</div>
+                    <div class="emoji">{{ f.desc }}</div>
+                    <div class="temp">{{ f.temp }}℃</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="dog-section">
+        <div class="dog-container">
+            <div class="dog-image-group">
+                <p class="dog-breed">🐶 {{ breed_name }}</p>
+                <img src="{{ dog_url }}" alt="Lucky Dog" id="dog-img">
+            </div>
+            <div class="balloon">
+                {{ dog_comment }}
+            </div>
+        </div>
+        <p><button id="update-btn">更新</button></p>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
