@@ -3,15 +3,13 @@ import time
 import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 
 # --- タイムゾーンの設定 ---
-# サーバー環境でも日本時間で動作させるための必須設定
 os.environ['TZ'] = 'Asia/Tokyo'
 try:
     time.tzset()
 except AttributeError:
-    # Windows環境用
     pass
 
 load_dotenv()
@@ -45,17 +43,15 @@ def format_datetime(dt_txt):
     ampm = "午前" if dt.hour < 12 else "午後"
     return f"{day_str}の{ampm}"
 
-def get_weather_emoji(icon_code):
+def get_weather_info(icon_code):
+    icon_id = icon_code[:2]
     emoji_map = {
         "01": "☀️", "02": "🌤️", "03": "☁️", "04": "☁️",
         "09": "🌧️", "10": "☔️", "11": "⛈️", "13": "⛄️", "50": "🌫️"
     }
-    return emoji_map.get(icon_code[:2], "🌈")
+    return emoji_map.get(icon_id, "🌈"), icon_id
 
 def get_target_forecast(city_name):
-    """
-    キャッシュを介さず、常に最新の予報を取得する。
-    """
     now = datetime.now()
     params = {
         "q": city_name,
@@ -70,11 +66,12 @@ def get_target_forecast(city_name):
         if "list" in response:
             for item in response["list"]:
                 dt = datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S")
-                # 未来の散歩ピーク（9時・15時）のみを抽出
                 if dt > now and dt.hour in [9, 15]:
+                    emoji, icon_id = get_weather_info(item["weather"][0]["icon"])
                     results.append({
                         "time": format_datetime(item["dt_txt"]),
-                        "desc": get_weather_emoji(item["weather"][0]["icon"]),
+                        "desc": emoji,
+                        "icon_id": icon_id,
                         "temp": round(item["main"]["temp"])
                     })
                 if len(results) >= 6:
@@ -90,37 +87,43 @@ def home():
     for display_name, city_name in CITIES.items():
         all_weather[display_name] = get_target_forecast(city_name)
     
-    # --- セリフ決定ロジック ---
     comment = "今日も一日頑張るワン！"
+    # 現在の月を取得
+    current_month = datetime.now().month
 
     if "23区" in all_weather and len(all_weather["23区"]) > 0:
         forecast_list = all_weather["23区"]
-        
-        # デフォルトはリストの先頭（直近の未来）
         target_forecast = forecast_list[0]
-
-        # リスト内を走査し、最初に見つかった「午前/午後」予報を優先（動的選択）
         for f in forecast_list:
             if "午前" in f["time"] or "午後" in f["time"]:
                 target_forecast = f
                 break
 
         time_label = target_forecast["time"]
-        weather_icon = target_forecast["desc"]
-        
-        comment_map = {
-            "☀️": f"{time_label}はお散歩日和だワン！",
-            "🌧️": f"{time_label}は雨っぽいワン。散歩は短めだワン。",
-            "☔️": f"{time_label}は雨っぽいワン。散歩は短めだワン。",
-            "☁️": f"{time_label}は雲がでるワン",
-            "🌤️": f"{time_label}は雲がでるワン",
-            "🌫️": f"{time_label}は雲がでるワン",
-            "⛄️": f"{time_label}は雪だワン！肉球が冷たいワン！",
-            "⛈️": f"{time_label}はカミナリは怖いワン..."
-        }
-        comment = comment_map.get(weather_icon, f"{time_label}も元気に過ごすワン！")
+        icon_id = target_forecast["icon_id"]
 
-    # --- 犬画像取得 (ここもリロードのたびに最新) ---
+        # --- 【新ロジック】季節×アイコンIDによる出し分け ---
+        if icon_id == "01":  # 晴れ
+            if 6 <= current_month <= 9:
+                comment = f"{time_label}は晴れだワン…でも夏のアスファルトはアチアチだワン！散歩は控えるワン。"
+            else:
+                comment = f"{time_label}はお散歩日和だワン！日差しが気持ちいいワン！"
+        
+        elif icon_id in ["02", "03", "04", "50"]:  # 曇り系
+            if 6 <= current_month <= 9:
+                comment = f"{time_label}は曇りだワン。夏はこれくらいが散歩しやすいワン！"
+            else:
+                comment = f"{time_label}は雲が出るワン。過ごしやすいワン。"
+        
+        elif icon_id in ["09", "10", "11"]:  # 雨・雷
+            comment = f"{time_label}は雨っぽいワン。散歩は中止か短めだワン。"
+        
+        elif icon_id == "13":  # 雪
+            comment = f"{time_label}は雪だワン！肉球が冷たくて震えるワン！"
+        
+        else:
+            comment = f"{time_label}も元気に過ごすワン！"
+
     try:
         d_data = requests.get(DOG_URL).json()
         dog_img = d_data['message']
