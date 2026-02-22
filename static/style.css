@@ -55,7 +55,7 @@ h1 { margin: 2px 0 8px; font-size: 1.2rem; color: #333; }
 .emoji { font-size: 1.8rem; line-height: 1; margin: 2px 0; }
 .temp { font-size: 1rem; font-weight: bold; color: #ff5722; }
 
-/* --- ワンコセクション（ここが重要） --- */
+/* --- ワンコセクション --- */
 .dog-section { 
     margin-top: 5px;
     flex: 1;
