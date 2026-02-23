@@ -13,7 +13,7 @@ app = Flask(__name__)
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 DOG_URL = "https://dog.ceo/api/breeds/image/random"
 TARGET_HOURS = [9, 15]
-REQUEST_TIMEOUT = 300
+REQUEST_TIMEOUT = 5
 
 CITIES = {
     "23区": "Chiyoda",
@@ -132,7 +132,7 @@ def home():
                 comment = f"{time_label}は晴れだワン…でも夏のアスファルトはアチアチだワン！散歩は控えるワン。"
             else:
                 comment = f"{time_label}はお散歩日和だワン！日差しが気持ちいいワン！"
-        elif icon_id in ["02", "03", "04", "50"]:
+        elif icon_id in ["02", "03", "04"]:
             if 6 <= current_month <= 9:
                 comment = f"{time_label}は曇りだワン。夏はこれくらいが散歩しやすいワン！"
             else:
@@ -141,11 +141,12 @@ def home():
             comment = f"{time_label}は雨っぽいワン。散歩は中止か短めだワン。"
         elif icon_id == "13":
             comment = f"{time_label}は雪だワン！肉球が冷たくて震えるワン！"
+        elif icon_id in "50":
+            comment = f"{time_label}は霧だワン！迷子に気を付けるワン！"
         
-        return render_template(
+    return render_template(
             'index.html',
             weather_data=all_weather,
-            dog_url="",         # JSで後から入れるので空
             breed_name="Loading...", 
             dog_comment=comment
         )

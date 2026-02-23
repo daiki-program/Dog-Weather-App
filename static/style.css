@@ -46,7 +46,6 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     text-align: center;
 }
 
-/* 予報エリア：PCでは両端揃え、スマホでスクロール */
 .forecast-cells {
     display: flex;
     flex: 1;
@@ -54,24 +53,17 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     padding: 12px 15px;
-    
-    /* 【PC版】両端揃えにする設定 */
     justify-content: space-between; 
-}
-
-/* スナップ機能（スマホ用） */
-.forecast-cells {
     scroll-snap-type: x mandatory; 
 }
 
 .forecast-cells::-webkit-scrollbar {
-    display: none; /* スクロールバー非表示 */
+    display: none;
 }
 
-/* 各予報セルの設定 */
 .cell {
     text-align: center;
-    flex-shrink: 1; /* PCでは縮んで並ぶ */
+    flex-shrink: 1;
     flex-basis: auto;
     scroll-snap-align: start;
 }
@@ -101,6 +93,8 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 200px; /* ロード中に高さが潰れないように確保 */
+    justify-content: center;
 }
 
 .dog-breed { 
@@ -110,9 +104,18 @@ h1 { margin: 10px 0; font-size: 1.2rem; color: #333; }
     font-size: 0.9rem;
 }
 
-.dog-section img { 
+/* 追加：Loadingテキストの設定 */
+#loading-text {
+    padding: 20px;
+    color: #666;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* 修正：ワンコ画像の設定 */
+#dog-image { 
+    display: none; /* JSのonloadが走るまで非表示 */
     max-height: 40vh; 
-    /* 150pxから1.4倍の210pxにアップ */
     width: 210px;
     max-width: 210px;
     border-radius: 15px;
@@ -147,18 +150,22 @@ button {
     background: #4caf50; color: white; border: none; 
     padding: 12px 60px; border-radius: 30px; 
     cursor: pointer; font-size: 1rem; font-weight: bold;
+    transition: 0.3s;
+}
+
+button:active {
+    transform: scale(0.95);
 }
 
 /* --- スマホ専用調整 (600px以下) --- */
 @media (max-width: 600px) {
-    /* 【スマホ版】スクロールを発生させるために左寄せに変更 */
     .forecast-cells {
         justify-content: flex-start; 
-        gap: 20px; /* セル間の余白 */
+        gap: 20px; 
     }
 
     .cell {
-        min-width: 80px; /* セルの幅を固定してはみ出させる */
+        min-width: 80px;
         flex-shrink: 0;
     }
 
