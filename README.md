@@ -8,6 +8,25 @@
 
 **👆RenderのStarterプランを利用し、常時稼働させています。**
 
+## 📂 ディレクトリ構成
+```text
+.
+├── dogWeather.py       # Flaskメインロジック
+├── requirements.txt    # 依存ライブラリ
+├── runtime.txt         # Pythonのバージョン指定
+├── render.yaml         # Renderデプロイ用設定
+├── .env                # 環境変数（Git管理外）
+├── .gitignore          #
+├── README.md           # 
+├── static/             # 
+│   ├── style.css       #
+│   ├── script.js       #
+│   ├── favicon.png     #
+│   └── bark.mp3        # ワンコの鳴き声
+└── templates/          # 
+    └── index.html      # 
+```
+
 ## 🌟 主な機能
 - リアルタイム予報の高速表示: 23区・多摩地区の特定の時間帯（9時・15時）に絞った実用的な予報。
 - サーバーサイド・キャッシュ: 天気データを10分間保持することで、API制限の回避と高速なレスポンスを実現。
@@ -63,3 +82,6 @@ python dogWeather.py
 起動後、ブラウザで以下のURLにアクセスしてください。
 
 [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+---
+Developed by D. S.
