@@ -21,7 +21,7 @@ CITIES = {
 }
 
 # --- キャッシュ用の設定 ---
-weather_cache = {}  # データを一時保存する箱
+weather_cache = {} 
 CACHE_DURATION_MINUTES = 10  # 10分間保存する設定
 
 # --- ヘルパー関数：常に日本時間を取得 ---
@@ -63,7 +63,7 @@ def get_weather_info(icon_code):
 def get_target_forecast(city_name):
     now = get_now_tokyo() # タイムゾーン付きの現在時刻
 
-    # 【追加】キャッシュを確認
+    # キャッシュを確認
     if city_name in weather_cache:
         expire_time = weather_cache[city_name]['expires']
         if now < expire_time:
