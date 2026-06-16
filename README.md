@@ -6,7 +6,8 @@
 ## 🌐 【本番環境】
 **[https://dog-weather-app.onrender.com/](https://dog-weather-app.onrender.com/)**
 
-**👆RenderのStarterプランを利用し、常時稼働させています。**
+~~👆RenderのStarterプランを利用し、常時稼働させています。~~  
+**※2026年6月より、経済状況悪化のため閉鎖中**
 
 ## 📂 ディレクトリ構成
 ```text
